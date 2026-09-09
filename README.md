@@ -1,5 +1,4 @@
 # mcphone-Expansion
-Here's the expanded English version (approximately 420 words), ending with the requested translation:
 
 Block Finance is a comprehensive financial-themed mod for Minecraft 1.20.1, requiring MCphone as a mandatory dependency. It is built around the concept of a "World Financial Center," where players can engage in realistic stock, futures, and spot trading within the game world. The mod introduces a fully functional economic simulation that mirrors real-world financial markets while remaining accessible and engaging for Minecraft players.
 
