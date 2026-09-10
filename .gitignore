@@ -1,0 +1,36 @@
+# 构建产物
+build/
+out/
+*.class
+
+# Gradle
+.gradle/
+gradle-app.setting
+.gradletasknamecache
+
+# 运行目录与日志
+run/
+logs/
+crash-reports/
+
+# 第三方前置模组：仓库不附带，请自行下载 MCphone 放入 libs/
+libs/*.jar
+!libs/.gitkeep
+
+# 本机专用（含绝对路径的离线构建脚本，不随仓库分发）
+build.bat
+mirror.init.gradle
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# 系统
+Thumbs.db
+.DS_Store
