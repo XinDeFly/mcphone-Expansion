@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 方块金融横屏手机屏幕（容器菜单式托管）。
+ * MCphone Market Expansion横屏手机屏幕（容器菜单式托管）。
  *
  * <p>适配层：负责与 {@link MarketMenu}（mode=3）的容器联动，
  * 实际的横屏 UI 全部委托给公共底盘 {@link LandscapePhoneChassis} 与

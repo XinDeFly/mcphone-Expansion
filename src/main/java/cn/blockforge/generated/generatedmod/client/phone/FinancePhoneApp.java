@@ -23,7 +23,7 @@ public final class FinancePhoneApp implements IPhoneApp {
 
     @Override
     public Component getDisplayName() {
-        return Component.literal("方块金融");
+        return Component.literal("市场扩展");
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class FinancePhoneApp implements IPhoneApp {
 
     @Override
     public List<RequiredMod> requiredMods() {
-        return List.of(new RequiredMod("generated_mod", "方块金融"));
+        return List.of(new RequiredMod("generated_mod", "市场扩展"));
     }
 
     @Override

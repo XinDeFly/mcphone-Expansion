@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
  * {@link LandscapePhoneChassis} 展示，托管旋转动画、手机边框、右侧功能条与页面生命周期。
  *
  * <p>适合不依赖容器菜单的横屏应用直接打开；需要服务端数据交互的应用
- * 请参照方块金融自身流程（通过 {@code MarketMenu(mode=3)} 打开对应屏幕）。</p>
+ * 请参照MCphone Market Expansion自身流程（通过 {@code MarketMenu(mode=3)} 打开对应屏幕）。</p>
  */
 public class LandscapePhoneScreen extends Screen {
 

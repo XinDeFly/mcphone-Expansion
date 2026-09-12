@@ -1,6 +1,12 @@
 # 方块金融 更新记录
 
 ## V4.5.6（2026-09-10）
+- 手机应用名使用中文 **市场扩展**（Mod 列表名保持英文 `MCphone Market Expansion`）。
+
+- **模组改名：方块金融 → MCphone Market Expansion（不升版号）。**
+  - 更新位置：Mod 列表显示名（uild.gradle 的 mod_name → mods.toml 的 displayName）、游戏内交易终端菜单标题、手机应用名与前置依赖名、pack.mcmeta 资源包描述、相关类注释与 README/wiki 文档。
+  - **modid 仍为 generated_mod（未改动）→ 现有存档、配置与前置依赖关系完全兼容。**
+  - 部署文件名同步改为 MCphoneMarketExpansion_V4.5.6.jar（旧名文件已删除）。
 
 - **修复：帮助正文被错误横向裁切（撤掉上一版引入的裁剪方案）+ 交易主界面金币动画越界（不升版号）。**
   - **正文被裁根因**：上一版为阻止正文覆盖警示条，在 `ScrollableText` 里用了 `enableScissor`。但该控件是在 `renderLabels`（pose 已平移 leftPos/topPos）中调用的，裁剪矩形被算错 —— 实测每行正文都被硬裁在 GUI x≈146、且第 5 行以下不再绘制，文字大面积缺失。

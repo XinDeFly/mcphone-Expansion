@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * 方块金融横屏页面：行情中心主界面 + 股票 / 期货 / 现货三大交易板块。
+ * MCphone Market Expansion横屏页面：行情中心主界面 + 股票 / 期货 / 现货三大交易板块。
  * 基于公共底盘 {@link LandscapePhoneChassis} 绘制与交互。
  */
 public final class MarketPage implements ILandscapePage {
