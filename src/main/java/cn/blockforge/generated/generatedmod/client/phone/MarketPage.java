@@ -1,6 +1,7 @@
 package cn.blockforge.generated.generatedmod.client.phone;
 
 import cn.blockforge.generated.generatedmod.api.client.ScrollableText;
+import cn.blockforge.generated.generatedmod.api.client.UiDraw;
 import cn.blockforge.generated.generatedmod.api.client.phone.ILandscapePage;
 import cn.blockforge.generated.generatedmod.api.client.phone.LandscapePhoneChassis;
 import cn.blockforge.generated.generatedmod.client.AbstractTradeScreen;
@@ -241,8 +242,15 @@ public final class MarketPage implements ILandscapePage {
         this.renderBoardButton(graphics, "‹ 返回", this.backButton, mouseX, mouseY);
         graphics.drawString(this.font, "使用说明", cx + 48, hy0 + 5, 0xFFFFFFFF);
 
+        // 顶部醒目警示条：紧贴标题栏下方（不留空档），常驻不随正文滚动。
+        int bannerY = this.chassis.topPos() + 34;
+        UiDraw.warningBanner(graphics, this.font, HelpScreen.WARNING, cx + 2, bannerY, cw - 2);
+
         // 条目文本：复用公共滚动文本控件（自动折行、右侧滑条、底部淡出）。
-        this.helpText.render(graphics, this.font, cx + 2, cy + 32, cw - 2, 146, 18, 0xFF0C1445);
+        // 区域下沿与改动前保持一致（cy + 178），空档腾出的高度全部还给正文。
+        int bottom = cy + 178;
+        int textY = bannerY + UiDraw.WARN_HEIGHT + 3;
+        this.helpText.render(graphics, this.font, cx + 2, textY, cw - 2, bottom - textY, 18, 0xFF0C1445);
     }
 
     private void renderBoard(GuiGraphics graphics, int mouseX, int mouseY) {

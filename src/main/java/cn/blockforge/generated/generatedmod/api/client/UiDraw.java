@@ -1,7 +1,9 @@
 package cn.blockforge.generated.generatedmod.api.client;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 
 import java.util.List;
@@ -35,7 +37,62 @@ public final class UiDraw {
     /** 金色（余额/强调）。 */
     public static final int GOLD = 0xFFFFD86B;
 
+    /** 警示条底色（深红）。 */
+    public static final int WARN_BG = 0xFF6B1218;
+    /** 警示条描边（亮红）。 */
+    public static final int WARN_BORDER = 0xFFFF6B6B;
+    /** 警示条文字（白色，配合加粗）。 */
+    public static final int WARN_TEXT = 0xFFFFFFFF;
+    /** 警示条高度（含 1px 上下描边）。 */
+    public static final int WARN_HEIGHT = 15;
+    /** 警示图标（金色三角）。 */
+    public static final int WARN_ICON = 0xFFFFD86B;
+    /** 警示图标内的感叹号颜色（深色）。 */
+    public static final int WARN_ICON_INK = 0xFF4A0C10;
+    /** 警示图标尺寸（边长）。 */
+    public static final int WARN_ICON_SIZE = 7;
+    /** 图标与文本的间距。 */
+    public static final int WARN_ICON_GAP = 5;
+
     private UiDraw() {
+    }
+
+    /**
+     * 顶部警示条：深红底 + 亮红描边 + 自绘金色警示三角 + 加粗白字，用于在说明页面顶部提示关键风险。
+     *
+     * <p>图标为绘制而非字符，避免依赖字体中可能缺失的 Unicode 符号；
+     * 内容过长时按可用宽度整体等比缩小，保证任何界面尺寸下都能完整显示（不截断）。</p>
+     *
+     * @param x,y   左上角（屏幕坐标）
+     * @param width 条宽（图标 + 文本作为一组水平居中）
+     */
+    public static void warningBanner(GuiGraphics graphics, Font font, String text, int x, int y, int width) {
+        graphics.fill(x, y, x + width, y + WARN_HEIGHT, WARN_BG);
+        graphics.fill(x, y, x + width, y + 1, WARN_BORDER);
+        graphics.fill(x, y + WARN_HEIGHT - 1, x + width, y + WARN_HEIGHT, WARN_BORDER);
+        Component label = Component.literal(text).withStyle(ChatFormatting.BOLD);
+        int textWidth = font.width(label);
+        int groupWidth = WARN_ICON_SIZE + WARN_ICON_GAP + textWidth;
+        int available = width - 6;
+        float scale = groupWidth <= available ? 1.0F : (float) available / groupWidth;
+        var pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(x + width / 2.0, y + (WARN_HEIGHT - 9 * scale) / 2.0, 0.0);
+        pose.scale(scale, scale, 1.0F);
+        int startX = -groupWidth / 2;
+        warningIcon(graphics, startX, 1);
+        graphics.drawString(font, label, startX + WARN_ICON_SIZE + WARN_ICON_GAP, 1, WARN_TEXT, false);
+        pose.popPose();
+    }
+
+    /** 自绘 7×7 金色警示三角（内含深色感叹号）。 */
+    private static void warningIcon(GuiGraphics graphics, int x, int y) {
+        for (int row = 0; row < 4; row++) {
+            graphics.fill(x + 3 - row, y + row, x + 4 + row, y + row + 1, WARN_ICON);
+        }
+        graphics.fill(x, y + 3, x + 7, y + 6, WARN_ICON);
+        graphics.fill(x + 3, y + 2, x + 4, y + 4, WARN_ICON_INK);
+        graphics.fill(x + 3, y + 5, x + 4, y + 6, WARN_ICON_INK);
     }
 
     /** 命中测试（相对坐标）。 */

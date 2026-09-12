@@ -65,9 +65,11 @@ public final class ScrollableText {
         int viewH = h - fadeH;
         this.maxScroll = Math.max(0, total - viewH);
         this.scroll = Math.max(0, Math.min(this.scroll, this.maxScroll));
+        // 只绘制落在视口内的行：滚动位置按行高对齐（见 mouseScrolled/mouseDragged），
+        // 因此不会出现"行画到上沿之外"的情况，也就不会覆盖上方的标题与警示条。
         for (int i = 0; i < this.rows.size(); i++) {
             int rowY = y + i * ROW_HEIGHT - this.scroll;
-            if (rowY >= y - ROW_HEIGHT && rowY < y + h) {
+            if (rowY >= y && rowY < y + h) {
                 graphics.drawString(font, this.rows.get(i), x, rowY, NoteText.BASE_COLOR);
             }
         }
@@ -94,12 +96,12 @@ public final class ScrollableText {
         }
     }
 
-    /** 鼠标滚轮滚动；返回 true 表示已处理。 */
+    /** 鼠标滚轮滚动（按行高对齐）；返回 true 表示已处理。 */
     public boolean mouseScrolled(double delta) {
         if (this.maxScroll <= 0) {
             return false;
         }
-        this.scroll = Math.max(0, Math.min(this.maxScroll, this.scroll + (delta < 0 ? 12 : -12)));
+        this.scroll = Math.max(0, Math.min(this.maxScroll, this.scroll + (delta < 0 ? ROW_HEIGHT : -ROW_HEIGHT)));
         return true;
     }
 
@@ -112,7 +114,7 @@ public final class ScrollableText {
                 && mouseY >= this.trackY && mouseY < this.trackY + this.trackH) {
             int track = this.trackH - this.thumbH;
             if (track > 0) {
-                this.scroll = Math.round((float) (mouseY - this.trackY - this.thumbH / 2.0) / track * this.maxScroll);
+                this.scroll = snap((float) (mouseY - this.trackY - this.thumbH / 2.0) / track * this.maxScroll);
             }
             this.dragging = true;
             return true;
@@ -120,16 +122,22 @@ public final class ScrollableText {
         return false;
     }
 
-    /** 滑块拖拽。 */
+    /** 滑块拖拽（按行高对齐）。 */
     public boolean mouseDragged(double mouseY) {
         if (!this.dragging || this.maxScroll <= 0) {
             return false;
         }
         int track = this.trackH - this.thumbH;
         if (track > 0) {
-            this.scroll = Math.round((float) (mouseY - this.trackY - this.thumbH / 2.0) / track * this.maxScroll);
+            this.scroll = snap((float) (mouseY - this.trackY - this.thumbH / 2.0) / track * this.maxScroll);
         }
         return true;
+    }
+
+    /** 把滚动量对齐到行高整数倍（保证任意时刻都不出现半截行）。 */
+    private int snap(float value) {
+        int snapped = Math.round(value / ROW_HEIGHT) * ROW_HEIGHT;
+        return Math.max(0, Math.min(this.maxScroll, snapped));
     }
 
     /** 松开鼠标，结束拖拽。 */

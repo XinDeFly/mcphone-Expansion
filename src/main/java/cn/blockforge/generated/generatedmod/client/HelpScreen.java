@@ -1,6 +1,7 @@
 package cn.blockforge.generated.generatedmod.client;
 
 import cn.blockforge.generated.generatedmod.api.client.ScrollableText;
+import cn.blockforge.generated.generatedmod.api.client.UiDraw;
 import cn.blockforge.generated.generatedmod.menu.MarketMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -11,9 +12,14 @@ import net.minecraft.world.entity.player.Inventory;
 import java.util.List;
 
 public final class HelpScreen extends AbstractContainerScreen<MarketMenu> {
+    /** 顶部醒目警示（图标由 UiDraw 自绘，不依赖字体中的特殊符号）。 */
+    public static final String WARNING = "徒手可挖掉方块，但方块内已存入的物品不会掉落！";
+
     /** 帮助条目（供桌面帮助页与手机应用的使用说明页共用）。 */
     public static final List<String> HELP_LINES = List.of(
             "欢迎使用世界金融中心",
+            "",
+            "【防丢物品】机箱、显示器、交易平台等方块都可以徒手挖掉并返还自身，但方块内已经存入的物品（含内存条、现货存储与机箱货物）不会掉落——挖掉前请先把里面的东西全部取出。",
             "",
             "【钱包】初始余额为 0；卖出物品即可获得资金，钱包随存档持久保存。",
             "【启动资金】推荐把世界里获得的资源（石头、矿石、圆木等）放到现货市场出售，快速积累启动资金。",
@@ -75,7 +81,9 @@ public final class HelpScreen extends AbstractContainerScreen<MarketMenu> {
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         // 注意：父类已对 pose 执行 translate(leftPos, topPos)，此处使用面板相对坐标。
         graphics.drawString(this.font, this.title, 10, 8, 0xffffffff);
-        this.text.render(graphics, this.font, 10, 42, this.imageWidth - 20, 162, 16, 0xFF0E1524);
+        // 顶部醒目警示条（常驻显示，不随帮助正文滚动）。
+        UiDraw.warningBanner(graphics, this.font, WARNING, 10, 36, this.imageWidth - 20);
+        this.text.render(graphics, this.font, 10, 55, this.imageWidth - 20, 149, 16, 0xFF0E1524);
     }
 
     @Override

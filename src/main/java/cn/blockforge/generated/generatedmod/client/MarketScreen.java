@@ -69,13 +69,16 @@ public class MarketScreen extends AbstractContainerScreen<MarketMenu> {
     private void drawFallingBitcoins(GuiGraphics graphics) {
         long t = System.currentTimeMillis() - this.startTime;
         double speed = 48.0;
-        double fallHeight = this.imageHeight + 40;
+        // 下落范围限制在面板内部（上下各留出边距），避免金币飘到界面之外。
+        int top = this.topPos + 6;
+        int bottom = this.topPos + this.imageHeight - 20;
+        double fallHeight = Math.max(20, bottom - top);
         for (int i = 0; i < 10; i++) {
             java.util.Random seed = new java.util.Random(i * 2654435761L);
             double phase = seed.nextDouble() * fallHeight;
             double position = (t / speed + phase) % fallHeight;
             long cycle = (long) (position / fallHeight);
-            int y = this.topPos - 20 + (int) (position % fallHeight);
+            int y = top + (int) (position % fallHeight);
             java.util.Random random = new java.util.Random((cycle * 31L + i) * 2654435761L);
             int x = this.leftPos + 8 + random.nextInt(this.imageWidth - 30);
             int alpha = 90 + (i * 17) % 110;
