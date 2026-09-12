@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "connected=false,facing=north": { "model": "mod_3ce985ee:block/computer_tower" },
+    "connected=false,facing=east": { "model": "mod_3ce985ee:block/computer_tower", "y": 90 },
+    "connected=false,facing=south": { "model": "mod_3ce985ee:block/computer_tower", "y": 180 },
+    "connected=false,facing=west": { "model": "mod_3ce985ee:block/computer_tower", "y": 270 }
+  }
+}

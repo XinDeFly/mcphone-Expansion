@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","pattern":["IFI","ISI","IFI"],"key":{"I":{"item":"minecraft:iron_block"},"F":{"item":"minecraft:iron_bars"},"S":{"item":"minecraft:redstone_block"}},"result":{"item":"mod_3ce985ee:computer_tower","count":1}}

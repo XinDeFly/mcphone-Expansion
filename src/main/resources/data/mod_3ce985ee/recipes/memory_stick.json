@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AgA",
+    "rRb",
+    "ccc"
+  ],
+  "key": {
+    "A": "minecraft:glass",
+    "g": "minecraft:gold_block",
+    "r": "minecraft:redstone_repeater",
+    "R": "minecraft:redstone_block",
+    "b": "minecraft:redstone_comparator",
+    "c": "minecraft:copper_block"
+  },
+  "result": {
+    "item": "mod_3ce985ee:memory_stick"
+  }
+}

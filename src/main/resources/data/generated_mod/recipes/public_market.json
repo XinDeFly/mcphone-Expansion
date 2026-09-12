@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","pattern":["BLB","GGG","BBB"],"key":{"B":{"item":"minecraft:bookshelf"},"L":{"item":"minecraft:lapis_block"},"G":{"item":"minecraft:gold_block"}},"result":{"item":"generated_mod:public_market","count":1}}

@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","pattern":["GDG","DED","GDG"],"key":{"G":{"item":"minecraft:gold_block"},"D":{"item":"minecraft:diamond_block"},"E":{"item":"minecraft:emerald_block"}},"result":{"item":"generated_mod:dollar","count":1}}

@@ -1,0 +1,79 @@
+{
+  "credit": "AutoMods",
+  "ambientocclusion": false,
+  "textures": {
+    "cable": "mod_3ce985ee:block/computer_cable",
+    "particle": "mod_3ce985ee:block/computer_cable"
+  },
+  "elements": [
+    {
+      "name": "computer_cable_west",
+      "from": [
+        0.0,
+        7.75,
+        7.75
+      ],
+      "to": [
+        2.2,
+        8.25,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cable"
+        }
+      }
+    }
+  ]
+}

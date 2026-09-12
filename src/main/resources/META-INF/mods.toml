@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="XinDeFly"
+displayURL="https://github.com/XinDeFly/mcphone-Expansion"
+issueTrackerURL="https://github.com/XinDeFly/mcphone-Expansion/issues"
+description='''基于 MCphone 的金融交易扩展模组：现货 / 期货 / 股票交易、手机金融 App、
+显示器控制台与可自动化交易的电脑机箱。右键便捷交易平台进入世界金融中心。'''
+credits="本模组以 november521 所开发的 MCphone 模组作为前置依赖，谨此向其作者致以诚挚的谢意。"
+logoFile="logo.png"
+[[dependencies.${mod_id}]]
+modId="forge"
+mandatory=true
+versionRange="[${forge_version},)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.${mod_id}]]
+modId="minecraft"
+mandatory=true
+versionRange="[${minecraft_version}]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="mcphone"
+mandatory=true
+versionRange="[0.10.2,)"
+ordering="NONE"
+side="BOTH"

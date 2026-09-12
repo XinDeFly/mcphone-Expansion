@@ -1,0 +1,289 @@
+{
+  "credit": "AutoMods",
+  "ambientocclusion": false,
+  "textures": {
+    "front": "mod_3ce985ee:block/computer_monitor",
+    "screen": "mod_3ce985ee:block/computer_monitor_screen_off",
+    "back": "mod_3ce985ee:block/computer_monitor_back",
+    "side": "mod_3ce985ee:block/computer_monitor_side",
+    "particle": "mod_3ce985ee:block/computer_monitor_side"
+  },
+  "elements": [
+    {
+      "name": "monitor_shell",
+      "from": [
+        2.5,
+        3.5,
+        2.5
+      ],
+      "to": [
+        13.5,
+        13.5,
+        7.0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "monitor_screen",
+      "from": [
+        3.25,
+        4.5,
+        2.32
+      ],
+      "to": [
+        12.75,
+        12.5,
+        2.46
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#screen"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "monitor_stem",
+      "from": [
+        7.0,
+        1.0,
+        4.5
+      ],
+      "to": [
+        9.0,
+        4.0,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "monitor_base",
+      "from": [
+        4.0,
+        0.0,
+        3.5
+      ],
+      "to": [
+        12.0,
+        1.5,
+        9.0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","pattern":["GRS","GAS","GCS"],"key":{"G":{"item":"minecraft:glass_pane"},"R":{"item":"minecraft:redstone_repeater"},"S":{"item":"minecraft:redstone_block"},"A":{"item":"minecraft:gold_block"},"C":{"item":"minecraft:redstone_comparator"}},"result":{"item":"mod_3ce985ee:computer_monitor","count":1}}

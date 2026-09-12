@@ -1,0 +1,220 @@
+{
+  "credit": "AutoMods",
+  "ambientocclusion": false,
+  "textures": {
+    "front": "mod_3ce985ee:block/computer_tower",
+    "front_panel": "mod_3ce985ee:block/computer_tower_front_panel",
+    "back": "mod_3ce985ee:block/computer_tower_back",
+    "side": "mod_3ce985ee:block/computer_tower_side",
+    "particle": "mod_3ce985ee:block/computer_tower_side"
+  },
+  "elements": [
+    {
+      "name": "tower_shell",
+      "from": [
+        4.0,
+        0.5,
+        1.5
+      ],
+      "to": [
+        12.0,
+        15.5,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "tower_front_panel",
+      "from": [
+        4.0,
+        0.5,
+        1.3
+      ],
+      "to": [
+        12.0,
+        15.5,
+        1.49
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#front_panel"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "tower_back_panel",
+      "from": [
+        4.6,
+        1.5,
+        14.48
+      ],
+      "to": [
+        11.4,
+        14.5,
+        14.66
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}
