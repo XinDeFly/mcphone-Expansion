@@ -31,6 +31,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 /**
  * MCphone Market Expansion横屏页面：行情中心主界面 + 股票 / 期货 / 现货三大交易板块。
@@ -163,7 +164,7 @@ public final class MarketPage implements ILandscapePage {
         MarketSnapshot snapshot = this.menu.snapshot();
         // 独立「使用说明」按钮（界面左上角），余额排在按钮下方。
         this.renderBoardButton(graphics, "使用说明", this.helpButton, mouseX, mouseY);
-        String info = "钱包 $" + snapshot.balance();
+        String info = "钱包 " + Money.format(snapshot.balance());
         graphics.drawString(this.font, info, cx + 2, chassis.topPos() + 40, 0xFFFFD86B);
         if (this.helpButton.contains(mouseX, mouseY)) {
             graphics.renderComponentTooltip(this.font, List.of(Component.literal("使用说明与交易帮助")), mouseX, mouseY);
@@ -279,7 +280,7 @@ public final class MarketPage implements ILandscapePage {
         };
         graphics.drawString(this.font, title, cx + 48, hy0 + 5, 0xFFFFFFFF);
         MarketSnapshot snapshot = this.menu.snapshot();
-        String info = "$" + snapshot.balance() + " " + timeShort(snapshot.dayTime());
+        String info = Money.format(snapshot.balance()) + " " + timeShort(snapshot.dayTime());
         graphics.drawString(this.font, info, cx + cw - this.font.width(info), hy0 + 5, 0xFFD8E0EA);
 
         boolean spot = this.page == Page.SPOT;
@@ -333,7 +334,7 @@ public final class MarketPage implements ILandscapePage {
         if (quote != null) {
             String name = ItemIndex.displayName(asset);
             graphics.drawString(this.font, trim(name, 70), infoX, infoY, 0xFFFFFFFF);
-            String price = "$" + Math.round(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0);
+            String price = Money.price(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0);
             graphics.drawString(this.font, price, infoX + 74, infoY, quote.change >= 0 ? 0xFFFF6B6B : 0xFF5CDA8A);
             String holding = this.page == Page.STOCK ? "持仓 " + quote.stockTotal
                     : this.page == Page.FUTURES ? "净持仓 " + quote.futureQty : "拥有 " + ownedSpot(asset);
@@ -467,7 +468,7 @@ public final class MarketPage implements ILandscapePage {
                             : (quote.history[i] - quote.history[i - 1]) / quote.history[i - 1] * 100.0;
                     List<Component> lines = new ArrayList<>();
                     lines.add(Component.literal("近 15 日 · " + date).withStyle(net.minecraft.ChatFormatting.GOLD));
-                    lines.add(Component.literal("价格 $" + Math.round(quote.history[i])).withStyle(net.minecraft.ChatFormatting.YELLOW));
+                    lines.add(Component.literal("价格 " + Money.price(quote.history[i])).withStyle(net.minecraft.ChatFormatting.YELLOW));
                     lines.add(Component.literal(String.format(Locale.ROOT, "较前日 %+.1f%%", change))
                             .withStyle(change >= 0 ? net.minecraft.ChatFormatting.RED : net.minecraft.ChatFormatting.GREEN));
                     graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
@@ -529,7 +530,7 @@ public final class MarketPage implements ILandscapePage {
     private String rowLabel(String asset, AssetQuote quote) {
         String name = ItemIndex.displayName(asset);
         return quote == null ? name
-                : name + " $" + Math.round(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0);
+                : name + " " + Money.price(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0);
     }
 
     private void rebuildMatches() {
@@ -652,7 +653,7 @@ public final class MarketPage implements ILandscapePage {
         if (quote == null) {
             lines.add(Component.literal("行情加载中…").withStyle(net.minecraft.ChatFormatting.GRAY));
         } else {
-            lines.add(Component.literal("现价 $" + Math.round(quote.price)).withStyle(net.minecraft.ChatFormatting.YELLOW));
+            lines.add(Component.literal("现价 " + Money.price(quote.price)).withStyle(net.minecraft.ChatFormatting.YELLOW));
             lines.add(Component.literal(String.format(Locale.ROOT, "涨跌 %+.1f%%", quote.change * 100.0))
                     .withStyle(quote.change >= 0 ? net.minecraft.ChatFormatting.RED : net.minecraft.ChatFormatting.GREEN));
             if (this.page == Page.STOCK) {

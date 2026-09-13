@@ -28,6 +28,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 /**
  * 显示器控制台（桌面式）：全部内容绘制在显示器外壳的屏幕内
@@ -348,7 +349,7 @@ public final class MonitorScreen extends ScaledDeviceScreen<MarketMenu> {
             }
             AssetQuote quote = this.menu.quote(asset, false);
             String label = ItemIndex.displayName(asset) + (quote == null ? "  $—"
-                    : "  $" + Math.round(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0));
+                    : "  " + Money.price(quote.price) + String.format(Locale.ROOT, " %+.1f%%", quote.change * 100.0));
             graphics.drawString(this.font, trim(label, LIST_W - 14), rect.x + 13, rect.y + 4, 0xffe5e9ee);
         }
         // 选中物品信息
@@ -358,7 +359,7 @@ public final class MonitorScreen extends ScaledDeviceScreen<MarketMenu> {
             graphics.drawString(this.font, ItemIndex.displayName(asset), 8, 184,
                     quote == null ? 0xff8fa3bf : 0xffffffff);
             if (quote != null) {
-                graphics.drawString(this.font, "现价 $" + Math.round(quote.price)
+                graphics.drawString(this.font, "现价 " + Money.price(quote.price)
                                 + String.format(Locale.ROOT, "  (%+.1f%%)", quote.change * 100.0),
                         8, 196, quote.change >= 0 ? 0xffff6b6b : 0xff5cda8a);
             }
@@ -396,7 +397,7 @@ public final class MonitorScreen extends ScaledDeviceScreen<MarketMenu> {
 
         // ---- 右侧：机箱控制面板 ----
         MarketSnapshot snapshot = this.menu.snapshot();
-        graphics.drawString(this.font, "钱包 $" + snapshot.balance(), 382, 28, 0xffffd86b);
+        graphics.drawString(this.font, "钱包 " + Money.format(snapshot.balance()), 382, 28, 0xffffd86b);
 
         if (this.sync == null) {
             graphics.drawString(this.font, "机箱配置加载中…", 382, 44, 0xff8fa3bf);

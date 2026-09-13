@@ -19,6 +19,9 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkHooks;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
+import cn.blockforge.generated.generatedmod.api.rarity.RaritySources;
+import cn.blockforge.generated.generatedmod.api.rarity.RarityTier;
 
 public final class MarketServerActions {
     public static final long MAX_AMOUNT = 9_999_999L;
@@ -164,27 +167,27 @@ public final class MarketServerActions {
             return "数量无效：请输入 1 到 " + MAX_AMOUNT + " 之间的数量";
         }
         data.ensureActivated(level, asset, false);
-        long price = Math.max(1L, Math.round(data.price(asset, false)));
-        long total = price * amount;
+        double unitPrice = Math.max(0.01, data.price(asset, false));
+        long total = Money.fromDollars(unitPrice * amount);
         String name = MarketData.assetName(asset);
         if (buy) {
-            long commission = Math.max(1L, Math.round(total * 0.0003));
+            long commission = Math.max(1L, Money.rate(total, 0.0003));
             if (!data.withdraw(player.getUUID(), total + commission)) {
-                return "余额不足：需要 $" + (total + commission);
+                return "余额不足：需要 " + Money.format(total + commission);
             }
             data.addStock(player.getUUID(), asset, (int) amount, true);
             return "买入股票成功（T+1，明日可卖）：" + name + " ×" + amount
-                    + "，共 $" + (total + commission) + "（含佣金 $" + commission + "）";
+                    + "，共 " + Money.format(total + commission) + "（含佣金 " + Money.format(commission) + "）";
         }
         int available = data.stockTotal(player.getUUID(), asset) - data.stockLocked(player.getUUID(), asset);
         if (available < amount) {
             return "T+1 限制：今日买入的股票明日才能卖出，当前可卖 " + available;
         }
-        long stamp = Math.max(1L, Math.round(total * 0.001));
+        long stamp = Math.max(1L, Money.rate(total, 0.001));
         long net = total - stamp;
         data.addStock(player.getUUID(), asset, -(int) amount, false);
         data.deposit(player.getUUID(), net);
-        return "卖出股票成功：" + name + " ×" + amount + "，到账 $" + net + "（印花税 $" + stamp + "）";
+        return "卖出股票成功：" + name + " ×" + amount + "，到账 " + Money.format(net) + "（印花税 " + Money.format(stamp) + "）";
     }
 
     private static String futuresTrade(ServerPlayer player, MarketData data, ServerLevel level,
@@ -196,8 +199,8 @@ public final class MarketServerActions {
             return "数量无效：请输入 1 到 " + MAX_AMOUNT + " 之间的数量";
         }
         data.ensureActivated(level, asset, true);
-        long price = Math.max(1L, Math.round(data.price(asset, true)));
-        long fee = 1L;
+        double price = Math.max(0.01, data.price(asset, true));
+        long fee = Money.CENTS_PER_UNIT; // $1 固定手续费（= 100 分）
         long day = level.getDayTime() / 24000L;
         String name = MarketData.assetName(asset);
         FuturesPosition position = data.futuresPosition(player.getUUID(), asset);
@@ -208,12 +211,12 @@ public final class MarketServerActions {
                 return "最多可平空 " + closeable + " 手，请减少数量";
             }
             int close = (int) Math.min(amount, closeable);
-            long pnl = Math.round((price - position.avgEntry) * (-close));
+            long pnl = Money.fromDollars((price - position.avgEntry) * (-close));
             double marginBack = position.margin * (close / (double) closeable);
-            long delta = pnl + Math.round(marginBack) - fee;
+            long delta = pnl + Money.fromDollars(marginBack) - fee;
             data.closeFutures(player.getUUID(), asset, close, marginBack);
             data.setBalance(player.getUUID(), Math.max(0L, data.balance(player.getUUID()) + delta));
-            return "平空成功：" + name + " ×" + close + "，盈亏 $" + (pnl - fee) + "，保证金已返还";
+            return "平空成功：" + name + " ×" + close + "，盈亏 " + Money.format(pnl - fee) + "，保证金已返还";
         }
         if (!buyAction && position != null && position.qty > 0) {
             int closeable = position.qty;
@@ -221,23 +224,23 @@ public final class MarketServerActions {
                 return "最多可平多 " + closeable + " 手，请减少数量";
             }
             int close = (int) Math.min(amount, closeable);
-            long pnl = Math.round((price - position.avgEntry) * close);
+            long pnl = Money.fromDollars((price - position.avgEntry) * close);
             double marginBack = position.margin * (close / (double) closeable);
-            long delta = pnl + Math.round(marginBack) - fee;
+            long delta = pnl + Money.fromDollars(marginBack) - fee;
             data.closeFutures(player.getUUID(), asset, close, marginBack);
             data.setBalance(player.getUUID(), Math.max(0L, data.balance(player.getUUID()) + delta));
-            return "平多成功：" + name + " ×" + close + "，盈亏 $" + (pnl - fee) + "，保证金已返还";
+            return "平多成功：" + name + " ×" + close + "，盈亏 " + Money.format(pnl - fee) + "，保证金已返还";
         }
 
-        long notional = price * amount;
-        long margin = Math.max(1L, Math.round(notional * MarketData.FUTURES_MARGIN_RATE));
-        if (!data.withdraw(player.getUUID(), margin + fee)) {
-            return "保证金不足：需要 $" + (margin + fee) + "（10% 保证金 + $1 手续费）";
+        double notional = price * amount;
+        long marginCents = Math.max(1L, Money.fromDollars(notional * MarketData.FUTURES_MARGIN_RATE));
+        if (!data.withdraw(player.getUUID(), marginCents + fee)) {
+            return "保证金不足：需要 " + Money.format(marginCents + fee) + "（10% 保证金 + " + Money.format(fee) + " 手续费）";
         }
         int signed = buyAction ? (int) amount : -(int) amount;
-        data.openFutures(player.getUUID(), asset, signed, price, margin, day + MarketData.FUTURES_EXPIRY_DAYS);
+        data.openFutures(player.getUUID(), asset, signed, price, Money.toDollars(marginCents), day + MarketData.FUTURES_EXPIRY_DAYS);
         String direction = buyAction ? "开多" : "开空";
-        return direction + "成功：" + name + " ×" + amount + "，占用保证金 $" + margin
+        return direction + "成功：" + name + " ×" + amount + "，占用保证金 " + Money.format(marginCents)
                 + "，合约到期日 第 " + (day + MarketData.FUTURES_EXPIRY_DAYS) + " 天";
     }
 
@@ -249,18 +252,18 @@ public final class MarketServerActions {
             return "数量无效：请输入 1 到 " + MAX_AMOUNT + " 之间的数量";
         }
         data.ensureActivated(level, asset, false);
-        long price = Math.max(1L, Math.round(data.price(asset, false)));
-        long total = price * amount;
+        double unitPrice = Math.max(0.01, data.price(asset, false));
+        long total = Money.fromDollars(unitPrice * amount);
         String name = MarketData.assetName(asset);
         if (!data.withdraw(player.getUUID(), total)) {
-            return "余额不足：需要 $" + total;
+            return "余额不足：需要 " + Money.format(total);
         }
         Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(asset));
         ItemStack stack = new ItemStack(item, (int) amount);
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
-        return "现货买入成功：" + name + " ×" + amount + "，已放入背包，共 $" + total;
+        return "现货买入成功：" + name + " ×" + amount + "，已放入背包，共 " + Money.format(total);
     }
 
     private static String spotSell(ServerPlayer player, MarketData data, ServerLevel level, String asset, long amount) {
@@ -311,9 +314,16 @@ public final class MarketServerActions {
                 remaining -= take;
             }
         }
-        long price = Math.max(1L, Math.round(data.price(asset, false)));
-        data.deposit(player.getUUID(), price * amount);
-        return "现货卖出成功：" + name + " ×" + amount + "，到账 $" + (price * amount);
+        double unitPrice = Math.max(0.01, data.price(asset, false));
+        long gross = Money.fromDollars(unitPrice * amount);
+        // 卖出手续费：按物品稀有度等级收取（5.0% ~ 15.0%，等级越高越高）。
+        RarityTier tier = RaritySources.tier(asset);
+        long feeCents = Math.max(1L, Money.rate(gross, tier.sellFeeRate()));
+        long net = Math.max(0L, gross - feeCents);
+        data.deposit(player.getUUID(), net);
+        return "现货卖出成功：" + name + " ×" + amount + "，成交 " + Money.format(gross)
+                + "，手续费 " + Money.format(feeCents) + "（" + tier.displayName() + " " + tier.sellFeePercentText() + "）"
+                + "，到账 " + Money.format(net);
     }
 
     private static int countDollars(ServerPlayer player) {

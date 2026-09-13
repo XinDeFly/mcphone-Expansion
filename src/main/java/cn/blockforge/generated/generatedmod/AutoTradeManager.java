@@ -1,5 +1,6 @@
 package cn.blockforge.generated.generatedmod;
 
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 import cn.blockforge.generated.generatedmod.data.MarketData;
 import cn.blockforge.generated.generatedmod.network.Network;
 import cn.blockforge.generated.generatedmod.network.TowerActionPacket;
@@ -104,7 +105,7 @@ public final class AutoTradeManager {
     }
 
     private static void execute(ServerLevel level, MarketData data, ComputerTowerBlockEntity tower, TowerRule rule, long day) {
-        long price = Math.max(1L, Math.round(data.price(rule.itemId, false)));
+        double price = Math.max(0.01, data.price(rule.itemId, false));
         String name = MarketData.assetName(rule.itemId);
         ServerPlayer owner = level.getServer() == null ? null : level.getServer().getPlayerList().getPlayer(tower.owner());
         if (rule.action == 1) {
@@ -115,16 +116,16 @@ public final class AutoTradeManager {
                 return;
             }
             tower.removeItems(rule.itemId, amount);
-            long revenue = price * amount;
+            long revenue = Money.fromDollars(price * amount);
             data.deposit(tower.owner(), revenue);
             rule.lastFired = day;
             tower.touch();
-            notify(owner, "机箱自动出售成功：" + name + " ×" + amount + "，到账 $" + revenue);
+            notify(owner, "机箱自动出售成功：" + name + " ×" + amount + "，到账 " + Money.format(revenue));
         } else {
             // 购入：从绑定玩家钱包扣款，物品入机箱。
-            long cost = price * rule.amount;
+            long cost = Money.fromDollars(price * rule.amount);
             if (!data.withdraw(tower.owner(), cost)) {
-                notify(owner, "机箱自动购入失败：" + name + "（钱包余额不足，需要 $" + cost + "）");
+                notify(owner, "机箱自动购入失败：" + name + "（钱包余额不足，需要 " + Money.format(cost) + "）");
                 return;
             }
             ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(rule.itemId)), 1);
@@ -134,12 +135,12 @@ public final class AutoTradeManager {
             }
             int inserted = tower.insertItems(stack, rule.amount);
             if (inserted < rule.amount) {
-                long refund = (rule.amount - inserted) * price;
+                long refund = Money.fromDollars((rule.amount - inserted) * price);
                 data.deposit(tower.owner(), refund);
             }
             rule.lastFired = day;
             tower.touch();
-            notify(owner, "机箱自动购入成功：" + name + " ×" + inserted + "，花费 $" + (inserted * price));
+            notify(owner, "机箱自动购入成功：" + name + " ×" + inserted + "，花费 " + Money.format(Money.fromDollars(inserted * price)));
         }
     }
 

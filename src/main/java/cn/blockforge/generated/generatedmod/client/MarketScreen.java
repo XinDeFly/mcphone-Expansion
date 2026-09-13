@@ -13,6 +13,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 public class MarketScreen extends AbstractContainerScreen<MarketMenu> {
     private static final int HELP_X = 8;
@@ -147,7 +148,7 @@ public class MarketScreen extends AbstractContainerScreen<MarketMenu> {
         pose.popPose();
 
         MarketSnapshot snapshot = this.menu.snapshot();
-        String wallet = "钱包: $" + snapshot.balance();
+        String wallet = "钱包: " + Money.format(snapshot.balance());
         String time = MarketUi.headerTime(snapshot.dayTime());
         graphics.drawString(this.font, time, 10, 44, 0xff8fa3bf);
         graphics.drawString(this.font, wallet, this.imageWidth - 8 - this.font.width(wallet), 44, 0xff3bd18b);

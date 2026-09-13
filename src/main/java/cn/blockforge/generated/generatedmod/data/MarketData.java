@@ -58,13 +58,19 @@ public final class MarketData extends SavedData {
         MarketData data = new MarketData();
         data.lastDay = tag.getLong("LastDay");
 
+        // 货币单位迁移：单位版本 2 起金额以「分」存储；旧存档（整元）一次性 ×100。
+        boolean centsUnit = tag.getInt("MoneyUnit") >= 2;
         CompoundTag walletTag = tag.getCompound("Wallets");
         for (String key : walletTag.getAllKeys()) {
             try {
-                data.wallets.put(UUID.fromString(key), walletTag.getLong(key));
+                long raw = walletTag.getLong(key);
+                data.wallets.put(UUID.fromString(key), centsUnit ? raw : raw * 100L);
             } catch (IllegalArgumentException ignored) {
                 // Skip malformed entries.
             }
+        }
+        if (!centsUnit && !walletTag.getAllKeys().isEmpty()) {
+            data.setDirty();
         }
 
         boolean hasStockSection = tag.contains("StockPrices", Tag.TAG_COMPOUND);
@@ -240,6 +246,7 @@ public final class MarketData extends SavedData {
         CompoundTag walletTag = new CompoundTag();
         wallets.forEach((id, amount) -> walletTag.putLong(id.toString(), amount));
         tag.put("Wallets", walletTag);
+        tag.putInt("MoneyUnit", 2); // 2 = 金额以「分」存储
 
         saveSeries(stockSeries, tag, "Stock");
         saveSeries(futuresSeries, tag, "Futures");
@@ -349,6 +356,7 @@ public final class MarketData extends SavedData {
         return item == null ? asset : new ItemStack(item).getHoverName().getString();
     }
 
+    /** 钱包余额，单位：<b>分</b>（显示时用 {@code Money.format} 折算为两位小数）。 */
     public long balance(UUID id) {
         return wallets.getOrDefault(id, 0L);
     }
@@ -676,7 +684,7 @@ public final class MarketData extends SavedData {
                 ensureActivated(level, asset.getKey(), false);
                 double price = price(asset.getKey(), false);
                 double rate = 0.001 + level.random.nextDouble() * 0.003;
-                long dividend = Math.max(1L, Math.round(price * holding.total * rate));
+                long dividend = Math.max(1L, cn.blockforge.generated.generatedmod.api.economy.Money.fromDollars(price * holding.total * rate));
                 wallets.put(id, balance(id) + dividend);
                 message(id, "股票分红到账：" + assetName(asset.getKey()) + " ×" + holding.total + "，股息 $" + dividend);
             }
@@ -692,12 +700,12 @@ public final class MarketData extends SavedData {
                 double price = price(asset.getKey(), true);
                 long wallet = balance(id);
                 if (position.expiryDay <= day) {
-                    long pnl = Math.round((price - position.avgEntry) * position.qty);
+                    long pnl = cn.blockforge.generated.generatedmod.api.economy.Money.fromDollars((price - position.avgEntry) * position.qty);
                     wallet = Math.max(0L, wallet + pnl + Math.round(position.margin));
                     message(id, "期货到期交割：" + assetName(asset.getKey()) + " ×" + Math.abs(position.qty) + "，盈亏 $" + pnl);
                     iterator.remove();
                 } else {
-                    long delta = Math.round((price - position.markPrice) * position.qty);
+                    long delta = cn.blockforge.generated.generatedmod.api.economy.Money.fromDollars((price - position.markPrice) * position.qty);
                     if (wallet + delta < 0L) {
                         wallet = 0L;
                         message(id, "期货被强制平仓：" + assetName(asset.getKey()) + "，资金不足");

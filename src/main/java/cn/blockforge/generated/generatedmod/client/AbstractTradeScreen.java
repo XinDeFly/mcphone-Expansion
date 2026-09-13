@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 public abstract class AbstractTradeScreen extends AbstractContainerScreen<MarketMenu> {
     private static final int VISIBLE_ROWS = 6;
@@ -234,7 +235,7 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
             return name + "  $—";
         }
         String change = String.format(Locale.ROOT, "%+.1f%%", quote.change * 100.0);
-        return name + "  $" + Math.round(quote.price) + "  " + change;
+        return name + "  " + Money.price(quote.price) + "  " + change;
     }
 
     private void select(String asset) {
@@ -336,7 +337,7 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(this.font, this.title, 10, 10, 0xffffff);
         MarketSnapshot snapshot = this.menu.snapshot();
-        String wallet = "钱包: $" + snapshot.balance();
+        String wallet = "钱包: " + Money.format(snapshot.balance());
         int walletX = this.imageWidth - 8 - this.font.width(wallet);
         String time = MarketUi.headerTime(snapshot.dayTime());
         graphics.drawString(this.font, time, walletX - 6 - this.font.width(time), 10, 0xff8fa3bf);
@@ -350,7 +351,7 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
             if (quote == null) {
                 graphics.drawString(this.font, name + "  行情加载中…", 176, 142, 0xffb8c7df);
             } else {
-                graphics.drawString(this.font, name + "  现价 $" + Math.round(quote.price), 176, 142, 0xffffffff);
+                graphics.drawString(this.font, name + "  现价 " + Money.price(quote.price), 176, 142, 0xffffffff);
                 String change = String.format(Locale.ROOT, "涨跌 %+.1f%%", quote.change * 100.0);
                 graphics.drawString(this.font, change, 176, 154, quote.change >= 0 ? 0xffff6b6b : 0xff5cda8a);
                 NoteText.draw(graphics, this.font, this.holdingLabel(quote), 176, 166, 0xffb8c7df);
@@ -406,7 +407,7 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
                 String date = daysAgo == 0 ? "今天" : "前" + daysAgo + "天";
                 List<Component> lines = new ArrayList<>();
                 lines.add(Component.literal("近 15 日 · " + date).withStyle(ChatFormatting.GOLD));
-                lines.add(Component.literal("价格: $" + Math.round(quote.history[index])).withStyle(ChatFormatting.YELLOW));
+                lines.add(Component.literal("价格: " + Money.price(quote.history[index])).withStyle(ChatFormatting.YELLOW));
                 if (index == 0) {
                     lines.add(Component.literal("基准日").withStyle(ChatFormatting.GRAY));
                 } else {
@@ -449,7 +450,7 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
             return lines;
         }
         lines.add(Component.literal("当日行情").withStyle(ChatFormatting.GOLD));
-        lines.add(Component.literal("现价: $" + Math.round(quote.price)).withStyle(ChatFormatting.YELLOW));
+        lines.add(Component.literal("现价: " + Money.price(quote.price)).withStyle(ChatFormatting.YELLOW));
         String change = String.format(Locale.ROOT, "涨跌: %+.1f%%", quote.change * 100.0);
         lines.add(Component.literal(change).withStyle(quote.change >= 0 ? ChatFormatting.RED : ChatFormatting.GREEN));
         lines.add(NoteText.styled("股票持仓: " + quote.stockTotal + "（今日锁定 " + quote.stockLocked + "）").withStyle(ChatFormatting.AQUA));
@@ -458,8 +459,8 @@ public abstract class AbstractTradeScreen extends AbstractContainerScreen<Market
         } else {
             String direction = quote.futureQty > 0 ? "做多" : "做空";
             lines.add(Component.literal("期货: " + quote.futureQty + " " + direction
-                    + "，开仓 $" + Math.round(quote.futureEntry)
-                    + "，保证金 $" + Math.round(quote.futureMargin)
+                    + "，开仓 " + Money.price(quote.futureEntry)
+                    + "，保证金 " + Money.price(quote.futureMargin)
                     + "，到期 第 " + quote.futureExpiryDay + " 天").withStyle(ChatFormatting.AQUA));
         }
         return lines;

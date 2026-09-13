@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketMenu> {
     private static final int VISIBLE_ROWS = 6;
@@ -251,7 +252,7 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
             return name + "  $—";
         }
         String change = String.format(Locale.ROOT, "%+.1f%%", quote.change * 100.0);
-        return name + "  $" + Math.round(quote.price) + "  " + change;
+        return name + "  " + Money.price(quote.price) + "  " + change;
     }
 
     private void select(String asset) {
@@ -308,7 +309,7 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(this.font, this.title, 10, 5, 0xffffffff);
         MarketSnapshot snapshot = this.menu.snapshot();
-        String wallet = "钱包: $" + snapshot.balance();
+        String wallet = "钱包: " + Money.format(snapshot.balance());
         int walletX = this.imageWidth - 8 - this.font.width(wallet);
         String time = MarketUi.headerTime(snapshot.dayTime());
         graphics.drawString(this.font, time, walletX - 6 - this.font.width(time), 5, 0xff8fa3bf);
@@ -323,7 +324,7 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
             }
         } else {
             graphics.drawString(this.font, ItemIndex.displayName(asset), 10, 178, 0xffffffff);
-            String price = "现价 $" + Math.round(quote.price)
+            String price = "现价 " + Money.price(quote.price)
                     + String.format(Locale.ROOT, "  (%+.1f%%)", quote.change * 100.0);
             graphics.drawString(this.font, price, 10, 189, quote.change >= 0 ? 0xffff6b6b : 0xff5cda8a);
         }

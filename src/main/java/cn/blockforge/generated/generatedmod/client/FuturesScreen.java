@@ -6,6 +6,7 @@ import cn.blockforge.generated.generatedmod.network.MarketActionPacket;
 import cn.blockforge.generated.generatedmod.network.Network;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
 
 public final class FuturesScreen extends AbstractTradeScreen {
     public FuturesScreen(MarketMenu menu, Inventory inventory) {
@@ -28,7 +29,7 @@ public final class FuturesScreen extends AbstractTradeScreen {
         }
         String direction = quote.futureQty > 0 ? "多" : "空";
         return "期货: " + quote.futureQty + " " + direction
-                + "，保证金 $" + Math.round(quote.futureMargin)
+                + "，保证金 " + Money.price(quote.futureMargin)
                 + "，到期日 第 " + quote.futureExpiryDay + " 天";
     }
 
