@@ -103,8 +103,11 @@ public class MarketMenu extends AbstractContainerMenu {
             }
         } else if (mode == 3) {
             // 手机现货页槽位布局：9×3 独立存储 + 4px 分隔 + 9×4 背包，16px 格距（相对 leftPos/topPos）。
+            // cellY 由 44 上移到 34：让最后一排（快捷栏）在 GUI 坐标 y≈152 结束，
+            // 避免遮挡页面下方 y≈162 起的「物品名 / 价格 / 拥有数量」信息（槽位渲染与
+            // 点击命中均以本坐标为准，因此上移后两者依旧对齐）。
             int cellX = 182;
-            int cellY = 44;
+            int cellY = 34;
             int pitch = 16;
             for (int i = 0; i < storageSize; i++) {
                 addSlot(new Slot(marketInventory, i, cellX + (i % 9) * pitch, cellY + (i / 9) * pitch));

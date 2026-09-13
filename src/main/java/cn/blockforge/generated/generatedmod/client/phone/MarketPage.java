@@ -64,6 +64,8 @@ public final class MarketPage implements ILandscapePage {
     private Rectangle backButton;
     private Rectangle helpButton;
     private Slot hoveredSlot;
+    /** 需要在最后一步绘制数量的格子（图层置顶用）。 */
+    private List<Slot> countedSlots;
     /** 使用说明页滚动文本（复用公共控件）。 */
     private final ScrollableText helpText = new ScrollableText();
 
@@ -330,7 +332,7 @@ public final class MarketPage implements ILandscapePage {
         AssetQuote quote = asset.isEmpty() ? null : this.quote(asset);
         // 持仓/价格信息右移到列表蒙版之外，避免压住蒙版。
         int infoX = spot ? cx + 158 : cx + 130;
-        int infoY = cy + (spot ? 135 : 127);
+        int infoY = cy + (spot ? 131 : 123);
         if (quote != null) {
             String name = ItemIndex.displayName(asset);
             graphics.drawString(this.font, trim(name, 70), infoX, infoY, 0xFFFFFFFF);
@@ -378,6 +380,10 @@ public final class MarketPage implements ILandscapePage {
     private void renderSpotSlots(GuiGraphics graphics, int mouseX, int mouseY) {
         this.hoveredSlot = null;
         // 存储与背包均为纯格子（1px 描边），无外框包边（参考桌面终端样式），两区以间隙分隔。
+        // 注意：物品图标由 GuiGraphics 在本页 UI 之后才真正落笔，因此数量**不能**在这里画
+        // （会被图标盖住）。此处只记录需要标注数量的格子，由屏幕在整屏渲染的最后一步
+        // 调用 renderSlotCounts 统一绘制，从绘制顺序上保证数量位于图标之上。
+        List<Slot> withCount = new ArrayList<>();
         for (Slot slot : this.menu.slots) {
             int sx = this.chassis.leftPos() + slot.x;
             int sy = this.chassis.topPos() + slot.y;
@@ -389,17 +395,45 @@ public final class MarketPage implements ILandscapePage {
             graphics.fill(sx + SPOT_CELL - 1, sy, sx + SPOT_CELL, sy + SPOT_CELL, 0xFF3B526F);
             ItemStack stack = slot.getItem();
             if (!stack.isEmpty()) {
+                // 图标：保持原始尺寸与位置（0.75 缩放，约 12px），不做缩小。
                 PoseStack pose = graphics.pose();
                 pose.pushPose();
                 pose.translate(sx + 2, sy + 2, 0.0F);
                 pose.scale(0.75F, 0.75F, 1.0F);
                 graphics.renderItem(stack, 0, 0);
                 pose.popPose();
+                if (stack.getCount() > 1) {
+                    withCount.add(slot);
+                }
             }
             if (hovered) {
                 this.hoveredSlot = slot;
                 graphics.fill(sx, sy, sx + SPOT_CELL, sy + SPOT_CELL, 0x33FFFFFF);
             }
+        }
+        this.countedSlots = withCount;
+    }
+
+    /**
+     * 绘制格子内的堆叠数量：由屏幕在**整屏渲染的最后一步**调用（见 {@code PhoneLandscapeScreen.render}），
+     * 从而保证数量的图层位于物品图标之上。
+     *
+     * <p>样式与桌面端原版容器界面一致：右下角、白字描影，不加底衬。</p>
+     */
+    public void renderSlotCounts(GuiGraphics graphics) {
+        if (this.countedSlots == null || this.countedSlots.isEmpty()) {
+            return;
+        }
+        for (Slot slot : this.countedSlots) {
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty() || stack.getCount() <= 1) {
+                continue;
+            }
+            int sx = this.chassis.leftPos() + slot.x;
+            int sy = this.chassis.topPos() + slot.y;
+            String count = String.valueOf(stack.getCount());
+            graphics.drawString(this.font, count,
+                    sx + SPOT_CELL - 1 - this.font.width(count), sy + SPOT_CELL - 9, 0xFFFFFFFF, true);
         }
     }
 
@@ -473,7 +507,8 @@ public final class MarketPage implements ILandscapePage {
                             .withStyle(change >= 0 ? net.minecraft.ChatFormatting.RED : net.minecraft.ChatFormatting.GREEN));
                     graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
                 }
-                // 左侧基准点（i=0）不显示；其余天数保留点位标记。
+                // 点位标记：包含最左一天（i=0）在内全部绘制，
+                // 这样 15 日走势从图表最左侧开始，不再残留"基准日"空位。
                 graphics.fill(bx - 1, by - 1, bx + 1, by + 1,
                         i == quote.history.length - 1 ? 0xFF3BD18B : 0xFFCBD5E1);
             }
@@ -634,9 +669,13 @@ public final class MarketPage implements ILandscapePage {
         this.amount = 1L;
         if (this.amountBox != null) {
             this.amountBox.setValue("1");
+            this.amountBox.setFocused(false);
         }
         if (this.searchBox != null) {
             this.searchBox.setValue("");
+            // 交易/行情页进入即聚焦搜索框：这样可以直接打字（含 e/q/f 等字母与数字），
+            // 配合 TextInputGuard 不会再误触发原版「背包键关闭界面」。
+            this.searchBox.setFocused(target == Page.SPOT || target == Page.STOCK || target == Page.FUTURES);
         }
         this.rebuildMatches();
         if (!this.matches.isEmpty()) {
@@ -740,7 +779,13 @@ public final class MarketPage implements ILandscapePage {
             this.goTo(Page.HUB);
             return true;
         }
-        if (this.searchBox.mouseClicked(mouseX, mouseY, button) || this.amountBox.mouseClicked(mouseX, mouseY, button)) {
+        // 两个文本框互斥聚焦：避免焦点同时存在导致输入被两边分流。
+        if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
+            this.amountBox.setFocused(false);
+            return true;
+        }
+        if (this.amountBox.mouseClicked(mouseX, mouseY, button)) {
+            this.searchBox.setFocused(false);
             return true;
         }
 

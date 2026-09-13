@@ -76,7 +76,13 @@ public final class MarketData extends SavedData {
         boolean hasStockSection = tag.contains("StockPrices", Tag.TAG_COMPOUND);
         loadSeries(data.stockSeries, tag, hasStockSection ? "Stock" : "");
         loadSeries(data.futuresSeries, tag, "Futures");
-        data.migrateLegacyHoldings(tag);
+        // 持仓载入（修复：save 会写入 StockHoldings / FuturesPositions，此前 load 未读回，
+        // 导致每次世界重载后股票持仓与期货仓位被静默清空）。
+        data.loadHoldings(tag);
+        if (!tag.contains("StockHoldings", Tag.TAG_COMPOUND)) {
+            // 仅当不存在新版持仓区时才执行旧版（Holdings 列表）迁移，避免旧数据反复回填。
+            data.migrateLegacyHoldings(tag);
+        }
 
         CompoundTag storageTag = tag.getCompound("PlayerStorages");
         for (String key : storageTag.getAllKeys()) {
@@ -207,6 +213,64 @@ public final class MarketData extends SavedData {
         CompoundTag countTag = tag.getCompound(prefix + "LimitCount");
         for (String key : countTag.getAllKeys()) {
             series.limitCount.put(key, countTag.getInt(key));
+        }
+    }
+
+    /**
+     * 载入股票持仓与期货仓位（与 {@link #save} 写入的字段一一对应）。
+     *
+     * <p>字段：股票 {@code StockHoldings[uuid][asset] = {Total, Locked}}；
+     * 期货 {@code FuturesPositions[uuid][asset] = {Qty, Entry, Mark, Margin, Expiry}}。</p>
+     */
+    private void loadHoldings(CompoundTag tag) {
+        CompoundTag stockTag = tag.getCompound("StockHoldings");
+        for (String key : stockTag.getAllKeys()) {
+            UUID id;
+            try {
+                id = UUID.fromString(key);
+            } catch (IllegalArgumentException ignored) {
+                continue;
+            }
+            CompoundTag assets = stockTag.getCompound(key);
+            Map<String, StockHolding> map = new HashMap<>();
+            for (String asset : assets.getAllKeys()) {
+                CompoundTag value = assets.getCompound(asset);
+                int total = value.getInt("Total");
+                int locked = Math.max(0, value.getInt("Locked"));
+                if (total > 0) {
+                    map.put(asset, new StockHolding(total, Math.min(locked, total)));
+                }
+            }
+            if (!map.isEmpty()) {
+                stocks.put(id, map);
+            }
+        }
+
+        CompoundTag futuresTag = tag.getCompound("FuturesPositions");
+        for (String key : futuresTag.getAllKeys()) {
+            UUID id;
+            try {
+                id = UUID.fromString(key);
+            } catch (IllegalArgumentException ignored) {
+                continue;
+            }
+            CompoundTag assets = futuresTag.getCompound(key);
+            Map<String, FuturesPosition> map = new HashMap<>();
+            for (String asset : assets.getAllKeys()) {
+                CompoundTag value = assets.getCompound(asset);
+                int qty = value.getInt("Qty");
+                if (qty != 0) {
+                    map.put(asset, new FuturesPosition(
+                            qty,
+                            value.getDouble("Entry"),
+                            value.getDouble("Mark"),
+                            value.getDouble("Margin"),
+                            value.getLong("Expiry")));
+                }
+            }
+            if (!map.isEmpty()) {
+                futures.put(id, map);
+            }
         }
     }
 

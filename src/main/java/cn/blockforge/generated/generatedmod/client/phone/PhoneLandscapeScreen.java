@@ -49,6 +49,9 @@ public final class PhoneLandscapeScreen extends AbstractContainerScreen<MarketMe
         }
         this.page.render(graphics, mouseX, mouseY, partialTick);
         this.chassis.renderNavHover(graphics, mouseX, mouseY);
+        // 最后一步补画格子内堆叠数量：物品图标在此之前才落笔，
+        // 这样绘制顺序上数量必然位于图标之上（不会被图标盖住）。
+        this.page.renderSlotCounts(graphics);
     }
 
     @Override
