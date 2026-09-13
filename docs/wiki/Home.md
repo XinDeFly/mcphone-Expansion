@@ -1,4 +1,4 @@
-# MCphone Market Expansion · BlockFinance
+# MCphone 市场扩展（MCphone Market Expansion） · BlockFinance
 
 [使用指南](使用指南) ｜ [常见问题](常见问题) ｜ [更新日志](https://github.com/XinDeFly/mcphone-Expansion/blob/main/CHANGELOG.md) ｜ [下载](https://github.com/XinDeFly/mcphone-Expansion/releases)
 

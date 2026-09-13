@@ -1,4 +1,4 @@
-# MCphone Market Expansion
+# MCphone 市场扩展（MCphone Market Expansion）
 
 [使用指南](../../wiki/使用指南) ｜ [常见问题](../../wiki/常见问题) ｜ [从源码构建](docs/BUILD.md) ｜ [更新日志](CHANGELOG.md) ｜ [发布版本](../../releases)
 

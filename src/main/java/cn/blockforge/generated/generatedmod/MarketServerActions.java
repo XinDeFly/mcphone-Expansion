@@ -344,7 +344,7 @@ public final class MarketServerActions {
     private static String openPhoneHub(ServerPlayer player) {
         BlockPos pos = player.blockPosition();
         NetworkHooks.openScreen(player, new SimpleMenuProvider(
-                (id, inv, p) -> new MarketMenu(id, inv, pos, 3), Component.literal("MCphone Market Expansion")),
+                (id, inv, p) -> new MarketMenu(id, inv, pos, 3), Component.literal("MCphone 市场扩展")),
                 buf -> {
                     buf.writeBlockPos(pos);
                     buf.writeByte(3);

@@ -1,10 +1,12 @@
 package cn.blockforge.generated.generatedmod;
 
+import cn.blockforge.generated.generatedmod.command.RarityExportCommand;
 import cn.blockforge.generated.generatedmod.data.MarketData;
 import cn.blockforge.generated.generatedmod.menu.MarketMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
@@ -17,6 +19,12 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = GeneratedMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ServerEvents {
     private ServerEvents() {
+    }
+
+    /** 注册命令：/mcme rarity info | export（导出稀有度快照）。 */
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        RarityExportCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent

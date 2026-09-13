@@ -158,29 +158,18 @@ public final class ItemIndex {
         return chinese != null ? chinese : Component.translatable(item.getDescriptionId()).getString();
     }
 
+    /**
+     * 稀有度等级名（7 级：普通 / 稀有 / 罕见 / 史诗 / 传说 / 神话 / 唯一）。
+     *
+     * <p>数据来源自动降级：已安装「Rarity Core」→ 采用其评级；未安装 → 本模组内置稀有度快照 →
+     * 再退回原版 4 档稀有度映射。详见 {@link cn.blockforge.generated.generatedmod.api.rarity.RaritySources}。</p>
+     */
     public static String rarityTier(String id) {
-        Item item = item(id);
-        if (item == null) {
-            return "普通";
-        }
-        return switch (item.getRarity(ItemStack.EMPTY)) {
-            case EPIC -> "传说";
-            case RARE -> "史诗";
-            case UNCOMMON -> "稀有";
-            default -> "普通";
-        };
+        return cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tierName(id);
     }
 
+    /** 稀有度等级配色（与 7 级体系一致）。 */
     public static ChatFormatting rarityColor(String id) {
-        Item item = item(id);
-        if (item == null) {
-            return ChatFormatting.GRAY;
-        }
-        return switch (item.getRarity(ItemStack.EMPTY)) {
-            case EPIC -> ChatFormatting.GOLD;
-            case RARE -> ChatFormatting.LIGHT_PURPLE;
-            case UNCOMMON -> ChatFormatting.AQUA;
-            default -> ChatFormatting.GRAY;
-        };
+        return cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tier(id).chatColor();
     }
 }

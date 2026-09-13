@@ -549,31 +549,24 @@ public final class MarketData extends SavedData {
         }
     }
 
+    /**
+     * 物品基准价：按 <b>7 级稀有度</b>的价格区间取值（等级来源见
+     * {@link cn.blockforge.generated.generatedmod.api.rarity.RaritySources}）。
+     *
+     * <p>1 普通 30–100 ｜ 2 稀有 101–300 ｜ 3 罕见 301–1000 ｜ 4 史诗 1001–3000
+     * ｜ 5 传说 3001–10000 ｜ 6 神话 10001–30000 ｜ 7 唯一 30001–100000。</p>
+     */
     private static double basePrice(String asset) {
-        Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(asset));
+        cn.blockforge.generated.generatedmod.api.rarity.RarityTier tier =
+                cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tier(asset);
         int hash = Math.abs(asset.hashCode());
-        if (item == null) {
-            return 30 + hash % 71;
-        }
-        return switch (item.getRarity(ItemStack.EMPTY)) {
-            case EPIC -> 10001 + hash % 90000;
-            case RARE -> 1001 + hash % 9000;
-            case UNCOMMON -> 101 + hash % 900;
-            default -> 30 + hash % 71;
-        };
+        int span = Math.max(1, tier.priceMax() - tier.priceMin() + 1);
+        return tier.priceMin() + hash % span;
     }
 
+    /** 日波动上限（涨跌停幅度）：随稀有度等级递增（10% → 100%）。 */
     private static double volatility(String asset) {
-        Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(asset));
-        if (item == null) {
-            return 0.10;
-        }
-        return switch (item.getRarity(ItemStack.EMPTY)) {
-            case EPIC -> 1.00;
-            case RARE -> 0.45;
-            case UNCOMMON -> 0.22;
-            default -> 0.10;
-        };
+        return cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tier(asset).volatility();
     }
 
     public double price(String asset, boolean futuresBoard) {
