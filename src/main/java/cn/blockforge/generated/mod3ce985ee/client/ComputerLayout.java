@@ -58,6 +58,15 @@ public final class ComputerLayout {
 
     /** 设备几何：外壳矩形 + 屏幕矩形。 */
     public record Device(boolean monitor, Rect frame, Rect screen) {
+
+        /**
+         * 整机（外壳 + 屏幕）水平偏移：正数右移、负数左移。
+         *
+         * <p>作用于<b>设备矩形本身</b>，因此边框与界面内容会一起平移，
+         * 不会出现「内容动了、边框没动」的错位。</p>
+         */
+        public static final int UI_SHIFT_X = -12;
+
         /**
          * 按 GUI 尺寸计算：外壳保持基准宽高比，等比例缩放到可完整显示（不放大）。
          */
@@ -69,7 +78,8 @@ public final class ComputerLayout {
             int fw = Math.max(8, Math.round(baseW * scale));
             int fh = Math.max(8, Math.round(baseH * scale));
             int bezel = Math.max(4, Math.round((monitor ? MONITOR_BEZEL : TOWER_BEZEL) * (fw / baseW)));
-            Rect frame = new Rect((guiWidth - fw) / 2, (guiHeight - fh) / 2, fw, fh);
+            // 整机平移：外壳与屏幕使用同一个偏移，保证二者始终对齐
+            Rect frame = new Rect(((guiWidth - fw) / 2) + UI_SHIFT_X, (guiHeight - fh) / 2, fw, fh);
             Rect screen = new Rect(frame.x + bezel, frame.y + bezel, fw - bezel * 2, fh - bezel * 2);
             return new Device(monitor, frame, screen);
         }

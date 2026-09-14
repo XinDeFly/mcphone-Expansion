@@ -59,9 +59,9 @@ public final class Money {
         return String.format(Locale.ROOT, "%.2f", dollars);
     }
 
-    /** 价格（double 美元）→ 带 $ 的两位小数文本。 */
+    /** 价格（double 美元）→ 带 $ 的两位小数文本；负价格显示为 {@code -$12.34}（期货可跌到负数）。 */
     public static String price(double dollars) {
-        return "$" + pricePlain(dollars);
+        return dollars < 0 ? "-$" + pricePlain(-dollars) : "$" + pricePlain(dollars);
     }
 
     /** 百分比文本（保留一位小数），例如 {@code 6.5%}。 */

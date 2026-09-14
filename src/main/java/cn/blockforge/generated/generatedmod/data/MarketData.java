@@ -459,7 +459,9 @@ public final class MarketData extends SavedData {
             double value = base;
             for (int i = HISTORY_DAYS - 2; i >= 0; i--) {
                 double daily = (random.nextDouble() * 2.0 - 1.0) * swing;
-                value = Math.max(1.0, value / (1.0 + daily));
+                double step = 1.0 + daily;
+                double denom = Math.max(0.25, step); // 防止 1+daily ≤ 0 导致除零/符号翻转
+                value = futuresBoard ? value / denom : Math.max(1.0, value / denom);
                 values[i] = value;
             }
             series.history.put(asset, values);
@@ -495,7 +497,7 @@ public final class MarketData extends SavedData {
                 double roll = random.nextDouble();
                 boolean maintainLimit = count < 3 && roll < 0.40;
                 if (maintainLimit) {
-                    double next = Math.max(1.0, current * (1.0 + direction * baseCap));
+                    double next = nextPrice(current, direction * baseCap, futuresBoard);
                     double actual = next / current - 1.0;
                     series.changes.put(asset, actual);
                     series.prices.put(asset, next);
@@ -508,7 +510,7 @@ public final class MarketData extends SavedData {
                 int moveDir = reverse ? -direction : direction;
                 double magnitude = baseCap * (0.4 + random.nextDouble() * 0.5);
                 double desired = moveDir * magnitude;
-                double next = Math.max(1.0, current * (1.0 + desired));
+                double next = nextPrice(current, desired, futuresBoard);
                 double actual = next / current - 1.0;
                 series.changes.put(asset, actual);
                 series.prices.put(asset, next);
@@ -521,7 +523,7 @@ public final class MarketData extends SavedData {
                 return;
             }
             int remaining = series.limitDays.getOrDefault(asset, 0);
-            double next = Math.max(1.0, current * (1.0 + direction * baseCap));
+            double next = nextPrice(current, direction * baseCap, futuresBoard);
             double actual = next / current - 1.0;
             series.changes.put(asset, actual);
             series.prices.put(asset, next);
@@ -571,7 +573,7 @@ public final class MarketData extends SavedData {
             }
         }
 
-        double next = Math.max(1.0, current * (1.0 + desired));
+        double next = nextPrice(current, desired, futuresBoard);
         double actual = next / current - 1.0;
         series.changes.put(asset, actual);
         series.prices.put(asset, next);
@@ -598,6 +600,17 @@ public final class MarketData extends SavedData {
         updateStreaks(series, asset, actual);
     }
 
+    /**
+     * 计算下一日价格。
+     *
+     * <p><b>股票 / 现货</b>保留 <b>$1 地板价</b>（实物商品不会一文不值）；
+     * <b>期货</b>不设地板价 —— 高位波动（110% / 150%）下的暴跌可把价格打到 0 以下，
+     * 与现实期货市场的"负价格"行情一致，做多方会因此赔掉保证金以外的资金。</p>
+     */
+    private static double nextPrice(double current, double desired, boolean futuresBoard) {
+        double next = current * (1.0 + desired);
+        return futuresBoard ? next : Math.max(1.0, next);
+    }
     private static void shiftHistory(Series series, String asset, double next) {
         double[] values = series.history.get(asset);
         if (values == null || values.length != HISTORY_DAYS) {

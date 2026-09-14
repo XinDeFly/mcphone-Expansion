@@ -23,6 +23,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import cn.blockforge.generated.generatedmod.api.economy.Money;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.npc.Villager;
 
 /**
  * 稀有度快照命令：把当前游戏里所有物品的稀有度等级导出为快照文件。
@@ -51,7 +54,64 @@ public final class RarityExportCommand {
                                 .executes(RarityExportCommand::info))
                         .then(Commands.literal("export")
                                 .requires(source -> source.hasPermission(2))
-                                .executes(RarityExportCommand::export))));
+                                .executes(RarityExportCommand::export)))
+                .then(Commands.literal("broker")
+                        .then(Commands.literal("info")
+                                .executes(RarityExportCommand::brokerInfo))
+                        .then(Commands.literal("spawn")
+                                .requires(source -> source.hasPermission(2))
+                                .executes(RarityExportCommand::brokerSpawn))));
+    }
+
+    /** 查看附近做市商村民的状态（钱包 / 库存 / 盈亏）。 */
+    private static int brokerInfo(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.literal("§c请在游戏内由玩家执行"));
+            return 0;
+        }
+        java.util.List<Villager> brokers = player.serverLevel().getEntitiesOfClass(Villager.class,
+                player.getBoundingBox().inflate(64.0),
+                villager -> cn.blockforge.generated.generatedmod.broker.BrokerSpawn.isBroker(villager));
+        if (brokers.isEmpty()) {
+            source.sendSuccess(() -> Component.literal(
+                    "§7附近 64 格内没有做市商村民（可用 §f/mcme broker spawn §7生成一只用于测试）"), false);
+            return 0;
+        }
+        for (Villager villager : brokers) {
+            cn.blockforge.generated.generatedmod.broker.BrokerData data =
+                    cn.blockforge.generated.generatedmod.broker.BrokerData.of(villager);
+            source.sendSuccess(() -> Component.literal("§6[券商] §f" + data.baseName
+                    + " §7｜钱包 " + Money.format(data.wallet)
+                    + " ｜ 库存 " + data.stock.size() + " 种"
+                    + " ｜ 当日 " + Money.format(data.pnlDay)
+                    + " ｜ 累计 " + Money.format(data.pnlTotal)), false);
+        }
+        return brokers.size();
+    }
+
+    /** 在玩家位置生成一只做市商村民（便于测试与老存档补生成）。 */
+    private static int brokerSpawn(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.literal("§c请在游戏内由玩家执行"));
+            return 0;
+        }
+        net.minecraft.server.level.ServerLevel level = player.serverLevel();
+        Villager villager = net.minecraft.world.entity.EntityType.VILLAGER.create(level);
+        if (villager == null) {
+            source.sendFailure(Component.literal("§c生成失败"));
+            return 0;
+        }
+        villager.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
+        cn.blockforge.generated.generatedmod.broker.BrokerSpawn.convert(villager);
+        level.addFreshEntity(villager);
+        cn.blockforge.generated.generatedmod.broker.BrokerData data =
+                cn.blockforge.generated.generatedmod.broker.BrokerData.of(villager);
+        source.sendSuccess(() -> Component.literal("§a已生成做市商村民，初始钱包 " + Money.format(data.wallet)), true);
+        return 1;
     }
 
     private static int info(CommandContext<CommandSourceStack> context) {

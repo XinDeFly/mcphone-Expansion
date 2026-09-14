@@ -23,6 +23,14 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
  */
 public abstract class ScaledDeviceScreen<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
 
+    /**
+     * 内容额外水平微调（GUI 像素）：一般保持 0。
+     *
+     * <p>整机（外壳 + 内容）的水平位移请改 {@code ComputerLayout.Device.UI_SHIFT_X}，
+     * 那会同时移动边框与内容；此常量仅用于内容相对边框的个别微调。</p>
+     */
+    public static final int CONTENT_SHIFT_X = 0;
+
     private ComputerLayout.Device device;
     /** 内容缩放 = 设备屏幕实际宽度 / 内容基准宽度。 */
     private float contentScale = 1.0F;
@@ -52,8 +60,10 @@ public abstract class ScaledDeviceScreen<T extends AbstractContainerMenu> extend
         this.imageWidth = this.contentW;
         this.imageHeight = this.contentH;
         this.contentScale = Math.max(0.05F, screen.w / (float) this.contentW);
-        // 内容原点 = 屏幕左上角；内容按基准尺寸绘制后再由 render 统一缩放
-        this.leftPos = screen.x;
+        // 内容整体水平偏移（可调常量）：正数右移、负数左移。
+        // 由于渲染原点与命中测试（contentX/contentY）都以 leftPos 为基准，
+        // 只改这一处即可让「整个界面 + 所有计算坐标」同步平移。
+        this.leftPos = screen.x + CONTENT_SHIFT_X;
         this.topPos = screen.y;
     }
 

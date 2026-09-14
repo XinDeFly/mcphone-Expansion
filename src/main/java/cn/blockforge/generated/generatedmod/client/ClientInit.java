@@ -34,6 +34,9 @@ public final class ClientInit {
             if (menu.mode == 5) {
                 return new MonitorScreen(menu, inventory, title);
             }
+        if (menu.mode == 6) {
+            return new cn.blockforge.generated.generatedmod.client.BrokerScreen(menu, inventory, title);
+        }
             return new MarketScreen(menu, inventory, title);
             };
             MenuScreens.register(GeneratedMod.MARKET_MENU.get(), constructor);

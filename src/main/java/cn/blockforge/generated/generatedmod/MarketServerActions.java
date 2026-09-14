@@ -79,6 +79,14 @@ public final class MarketServerActions {
                 quoteAsset = validOrEmpty(packet.asset);
             }
             case MarketActionPacket.OPEN_SPOT -> status = openMenu(player, 2, "现货交易");
+            case MarketActionPacket.BROKER_BUY -> {
+                status = brokerTrade(player, data, level, true, packet.asset, packet.amount);
+                quoteAsset = validOrEmpty(packet.asset);
+            }
+            case MarketActionPacket.BROKER_SELL -> {
+                status = brokerTrade(player, data, level, false, packet.asset, packet.amount);
+                quoteAsset = validOrEmpty(packet.asset);
+            }
             case MarketActionPacket.OPEN_HUB -> status = openMenu(player, 0, "世界金融中心");
             case MarketActionPacket.OPEN_PHONE_HUB -> status = openPhoneHub(player);
             case MarketActionPacket.OPEN_TOWER_STORAGE -> status = openTowerStorage(player, packet.asset);
@@ -199,7 +207,8 @@ public final class MarketServerActions {
             return "数量无效：请输入 1 到 " + MAX_AMOUNT + " 之间的数量";
         }
         data.ensureActivated(level, asset, true);
-        double price = Math.max(0.01, data.price(asset, true));
+        // 期货价格可为负（不做下限钳制），以支持"跌到负数"的实际行情
+        double price = data.price(asset, true);
         long fee = Money.CENTS_PER_UNIT; // $1 固定手续费（= 100 分）
         long day = level.getDayTime() / 24000L;
         String name = MarketData.assetName(asset);
@@ -233,7 +242,7 @@ public final class MarketServerActions {
         }
 
         double notional = price * amount;
-        long marginCents = Math.max(1L, Money.fromDollars(notional * MarketData.FUTURES_MARGIN_RATE));
+        long marginCents = Math.max(1L, Money.fromDollars(Math.abs(notional) * MarketData.FUTURES_MARGIN_RATE));
         if (!data.withdraw(player.getUUID(), marginCents + fee)) {
             return "保证金不足：需要 " + Money.format(marginCents + fee) + "（10% 保证金 + " + Money.format(fee) + " 手续费）";
         }
@@ -335,6 +344,143 @@ public final class MarketServerActions {
             }
         }
         return count;
+    }
+
+    /** 右键做市商村民：打开做市商交易界面（mode 6，缓冲区内携带村民实体 ID）。 */
+    public static String openBroker(ServerPlayer player, net.minecraft.world.entity.npc.Villager villager) {
+        net.minecraft.core.BlockPos pos = villager.blockPosition();
+        int brokerId = villager.getId();
+        NetworkHooks.openScreen(player, new SimpleMenuProvider(
+                (id, inv, p) -> {
+                    MarketMenu menu = new MarketMenu(id, inv, pos, 6);
+                    menu.brokerId = brokerId;
+                    return menu;
+                }, Component.literal("券商交易")),
+                buf -> {
+                    buf.writeBlockPos(pos);
+                    buf.writeByte(6);
+                    buf.writeVarInt(brokerId);
+                });
+        return "";
+    }
+
+    /** 统计玩家存储区（本界面容器）+ 背包中该物品的总数。 */
+    private static long countOwned(ServerPlayer player, MarketMenu menu, Item item) {
+        long available = 0L;
+        Container storage = menu.marketInventory();
+        for (int i = 0; i < storage.getContainerSize(); i++) {
+            ItemStack stack = storage.getItem(i);
+            if (stack.is(item)) {
+                available += stack.getCount();
+            }
+        }
+        for (int i = 0; i < Math.min(36, player.getInventory().getContainerSize()); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.is(item)) {
+                available += stack.getCount();
+            }
+        }
+        return available;
+    }
+
+    /** 从存储区与背包中扣除指定数量的物品（先存储区、后背包）。 */
+    private static void takeOwned(ServerPlayer player, MarketMenu menu, Item item, long amount) {
+        Container storage = menu.marketInventory();
+        long remaining = amount;
+        for (int i = 0; i < storage.getContainerSize() && remaining > 0; i++) {
+            ItemStack stack = storage.getItem(i);
+            if (stack.is(item)) {
+                int take = (int) Math.min((long) stack.getCount(), remaining);
+                storage.removeItem(i, take);
+                remaining -= take;
+            }
+        }
+        for (int i = 0; i < Math.min(36, player.getInventory().getContainerSize()) && remaining > 0; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.is(item)) {
+                int take = (int) Math.min((long) stack.getCount(), remaining);
+                player.getInventory().removeItem(i, take);
+                remaining -= take;
+            }
+        }
+    }
+
+    /**
+     * 做市商成交：<b>买入按卖价 ask、卖出按买价 bid</b>，不收取额外手续费（价差即成本）。
+     *
+     * <p>报价锚定当日行情中间价，并按做市商自身的库存与钱包进行约束：
+     * 库存不足按可成交数量成交，钱包不足时按可负担数量成交。</p>
+     */
+    private static String brokerTrade(ServerPlayer player, MarketData data, ServerLevel level,
+                                      boolean buy, String asset, long amount) {
+        if (!isValidAsset(asset)) {
+            return "未知的交易标的";
+        }
+        if (!validAmount(amount)) {
+            return "数量无效：请输入 1 到 " + MAX_AMOUNT + " 之间的数量";
+        }
+        if (!(player.containerMenu instanceof MarketMenu menu) || menu.mode != 6 || menu.brokerId <= 0) {
+            return "当前界面不支持做市商交易";
+        }
+        if (!(level.getEntity(menu.brokerId) instanceof net.minecraft.world.entity.npc.Villager broker)) {
+            return "找不到该券商";
+        }
+        data.ensureActivated(level, asset, false);
+        cn.blockforge.generated.generatedmod.broker.BrokerData brokerData =
+                cn.blockforge.generated.generatedmod.broker.BrokerData.of(broker);
+        RarityTier tier = RaritySources.tier(asset);
+        double mid = Math.max(0.01, data.price(asset, false));
+        String name = MarketData.assetName(asset);
+        Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(asset));
+
+        if (buy) {
+            int stock = brokerData.stockOf(asset);
+            if (stock <= 0) {
+                return "券商暂无 " + name + " 库存（可先卖给它一些）";
+            }
+            long deal = Math.min(amount, stock);
+            double ask = cn.blockforge.generated.generatedmod.broker.BrokerQuotes.ask(mid, tier);
+            long total = Money.fromDollars(ask * deal);
+            if (!data.withdraw(player.getUUID(), total)) {
+                return "余额不足：需要 " + Money.format(total);
+            }
+            ItemStack stack = new ItemStack(item, (int) deal);
+            if (!player.getInventory().add(stack)) {
+                player.drop(stack, false);
+            }
+            brokerData.addStock(asset, -(int) deal);
+            brokerData.wallet += total;
+            brokerData.cost = Math.max(0L, brokerData.cost - total);
+            brokerData.save(broker);
+            cn.blockforge.generated.generatedmod.broker.BrokerName.refresh(broker, brokerData);
+            return "券商买入成功：" + name + " ×" + deal + "，按卖价 " + Money.price(ask)
+                    + " 成交，共 " + Money.format(total)
+                    + (deal < amount ? "（券商库存不足，仅成交 " + deal + "）" : "");
+        }
+
+        long available = countOwned(player, menu, item);
+        if (available < amount) {
+            return "可出售的 " + name + " 不足：存储区和背包内共只有 " + available;
+        }
+        double bid = cn.blockforge.generated.generatedmod.broker.BrokerQuotes.bid(mid, tier);
+        long revenue = Money.fromDollars(bid * amount);
+        if (brokerData.wallet < revenue) {
+            long affordable = bid <= 0.0 ? 0L : (long) Math.floor(Money.toDollars(brokerData.wallet) / bid);
+            if (affordable <= 0L) {
+                return "券商资金不足（钱包 " + Money.format(brokerData.wallet) + "）";
+            }
+            amount = Math.min(amount, affordable);
+            revenue = Money.fromDollars(bid * amount);
+        }
+        takeOwned(player, menu, item, amount);
+        data.deposit(player.getUUID(), revenue);
+        brokerData.addStock(asset, (int) amount);
+        brokerData.wallet -= revenue;
+        brokerData.cost += revenue;
+        brokerData.save(broker);
+        cn.blockforge.generated.generatedmod.broker.BrokerName.refresh(broker, brokerData);
+        return "券商卖出成功：" + name + " ×" + amount + "，按买价 " + Money.price(bid)
+                + " 成交，到账 " + Money.format(revenue);
     }
 
     private static String openMenu(ServerPlayer player, int mode, String title) {

@@ -188,8 +188,14 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
     private void spot(boolean buy) {
         String asset = selectedAsset();
         if (!asset.isEmpty()) {
-            Network.sendToServer(new MarketActionPacket(
-                    buy ? MarketActionPacket.BUY_SPOT : MarketActionPacket.SELL_SPOT, asset, this.amount));
+            // 做市商界面（mode 6）走 BROKER_BUY / BROKER_SELL：按卖价 ask 买入、按买价 bid 卖出
+            byte action;
+            if (this.menu.mode == 6) {
+                action = buy ? MarketActionPacket.BROKER_BUY : MarketActionPacket.BROKER_SELL;
+            } else {
+                action = buy ? MarketActionPacket.BUY_SPOT : MarketActionPacket.SELL_SPOT;
+            }
+            Network.sendToServer(new MarketActionPacket(action, asset, this.amount));
         }
     }
 
@@ -252,6 +258,13 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
             return name + "  $—";
         }
         String change = String.format(Locale.ROOT, "%+.1f%%", quote.change * 100.0);
+        if (this.menu.mode == 6) {
+            // 做市商界面：行内显示「买价↓ / 卖价↑」（做市商收货价 / 出货价）
+            cn.blockforge.generated.generatedmod.api.rarity.RarityTier tier =
+                    cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tier(asset);
+            return name + "  ↓" + Money.pricePlain(cn.blockforge.generated.generatedmod.broker.BrokerQuotes.bid(quote.price, tier))
+                    + " ↑" + Money.pricePlain(cn.blockforge.generated.generatedmod.broker.BrokerQuotes.ask(quote.price, tier));
+        }
         return name + "  " + Money.price(quote.price) + "  " + change;
     }
 
@@ -324,9 +337,21 @@ public abstract class AbstractSpotScreen extends AbstractContainerScreen<MarketM
             }
         } else {
             graphics.drawString(this.font, ItemIndex.displayName(asset), 10, 178, 0xffffffff);
-            String price = "现价 " + Money.price(quote.price)
-                    + String.format(Locale.ROOT, "  (%+.1f%%)", quote.change * 100.0);
-            graphics.drawString(this.font, price, 10, 189, quote.change >= 0 ? 0xffff6b6b : 0xff5cda8a);
+            if (this.menu.mode == 6) {
+                // 做市商界面：双列报价 + 价差（不显示中间价；成交按 bid/ask，无额外手续费）
+                cn.blockforge.generated.generatedmod.api.rarity.RarityTier tier =
+                        cn.blockforge.generated.generatedmod.api.rarity.RaritySources.tier(asset);
+                String bid = "买价 " + Money.price(cn.blockforge.generated.generatedmod.broker.BrokerQuotes.bid(quote.price, tier));
+                String ask = "卖价 " + Money.price(cn.blockforge.generated.generatedmod.broker.BrokerQuotes.ask(quote.price, tier));
+                graphics.drawString(this.font, bid, 10, 189, 0xff5cda8a);
+                graphics.drawString(this.font, ask, 10 + this.font.width(bid) + 14, 189, 0xffff6b6b);
+                graphics.drawString(this.font, "价差 " + cn.blockforge.generated.generatedmod.broker.BrokerQuotes.spreadText(tier)
+                        + "  （" + tier.displayName() + "）", 10, 200, 0xffe0c07a);
+            } else {
+                String price = "现价 " + Money.price(quote.price)
+                        + String.format(Locale.ROOT, "  (%+.1f%%)", quote.change * 100.0);
+                graphics.drawString(this.font, price, 10, 189, quote.change >= 0 ? 0xffff6b6b : 0xff5cda8a);
+            }
         }
 
         String status = snapshot.status();

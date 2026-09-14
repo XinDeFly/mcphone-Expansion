@@ -47,6 +47,8 @@ public final class RaritySources {
     private static volatile boolean coreChecked;
     private static volatile Method coreGetRarityStack;
     private static volatile Method coreGetRarityItem;
+    private static volatile boolean coreRegistryChecked;
+    private static volatile Method coreGetRegistryMap;
 
     private RaritySources() {
     }
@@ -140,18 +142,45 @@ public final class RaritySources {
         if (fromSnapshot != null && fromSnapshot >= RarityTier.MIN_LEVEL && fromSnapshot <= RarityTier.MAX_LEVEL) {
             return fromSnapshot;
         }
-        return fromVanilla(item.getRarity(new ItemStack(item)));
+        return classifyLocally(new ItemStack(item));
     }
 
-    /** 原版 4 档稀有度映射到 7 级（普通→1、罕见→3、稀有→5、史诗→7）。 */
+    /**
+     * 本地稀有度分类（<b>仅前 4 级</b>）：供未安装 Rarity Core、且内置快照中也没有该物品时使用。
+     *
+     * <p>规则：先取原版 4 档稀有度作为基础等级（普通 1 / 罕见 2 / 稀有 3 / 史诗 4），
+     * 再按物品自身特性加分，最后夹紧到 1~4 级：</p>
+     * <ul>
+     *   <li>不可堆叠（工具、装备、药水等）→ +1；</li>
+     *   <li>带耐久（工具、武器、盔甲）→ +1。</li>
+     * </ul>
+     * <p>这样普通方块/材料多为 1 级，而铁砧、附魔台、钻石装备等会得到 3~4 级，
+     * 与它们实际的获取难度相符，且不会越过前 4 级。</p>
+     */
+    public static int classifyLocally(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return RarityTier.MIN_LEVEL;
+        }
+        int base = fromVanilla(stack.getItem().getRarity(stack));
+        int bonus = 0;
+        if (stack.getMaxStackSize() == 1) {
+            bonus++;
+        }
+        if (stack.isDamageableItem()) {
+            bonus++;
+        }
+        return Math.max(RarityTier.MIN_LEVEL, Math.min(4, base + bonus));
+    }
+
+    /** 原版 4 档稀有度映射到前 4 级（普通→1、罕见→2、稀有→3、史诗→4）。 */
     public static int fromVanilla(Rarity rarity) {
         if (rarity == null) {
             return RarityTier.MIN_LEVEL;
         }
         return switch (rarity) {
-            case UNCOMMON -> 3;
-            case RARE -> 5;
-            case EPIC -> 7;
+            case UNCOMMON -> 2;
+            case RARE -> 3;
+            case EPIC -> 4;
             default -> RarityTier.MIN_LEVEL;
         };
     }
@@ -172,6 +201,59 @@ public final class RaritySources {
             // 第三方 API 异常时静默降级到快照 / 原版稀有度
         }
         return null;
+    }
+
+    /**
+     * 主动向 Rarity Core <b>批量请求</b>全部物品的稀有度（调用其 {@code getRegistryMap()}），
+     * 写入本模组缓存。世界加载 / 服务器启动时调用，避免逐项惰性查询。
+     *
+     * @return 本次写入缓存的条目数；未安装 Rarity Core 或调用失败时返回 0
+     */
+    public static int prefetch() {
+        Method method = coreRegistryMethod();
+        if (method == null) {
+            return 0;
+        }
+        try {
+            Object result = method.invoke(null);
+            if (result instanceof Map<?, ?> map) {
+                int count = 0;
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (entry.getKey() instanceof ResourceLocation id
+                            && entry.getValue() instanceof Integer level
+                            && level >= RarityTier.MIN_LEVEL && level <= RarityTier.MAX_LEVEL) {
+                        CACHE.put(id.toString(), level);
+                        count++;
+                    }
+                }
+                return count;
+            }
+        } catch (Throwable ignored) {
+            // 第三方 API 异常时静默跳过，后续仍可按单项惰性查询
+        }
+        return 0;
+    }
+
+    /** Rarity Core 的 {@code getRegistryMap()} 方法（未安装时为 null）。 */
+    private static Method coreRegistryMethod() {
+        if (!coreRegistryChecked) {
+            synchronized (RaritySources.class) {
+                if (!coreRegistryChecked) {
+                    Method resolved = null;
+                    if (ModList.get() != null && ModList.get().isLoaded(RARITYCORE_MODID)) {
+                        try {
+                            Class<?> api = Class.forName("org.yanbwe.raritycore.api.RarityCoreAPI");
+                            resolved = api.getMethod("getRegistryMap");
+                        } catch (Throwable ignored) {
+                            resolved = null;
+                        }
+                    }
+                    coreGetRegistryMap = resolved;
+                    coreRegistryChecked = true;
+                }
+            }
+        }
+        return coreGetRegistryMap;
     }
 
     private static Method coreMethod() {

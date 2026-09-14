@@ -21,6 +21,19 @@ public final class ServerEvents {
     private ServerEvents() {
     }
 
+    /**
+     * 服务器启动后：若已安装 Rarity Core，主动向其批量请求全部物品的稀有度并写入缓存
+     * （未安装则不做任何事，自动使用内置快照 + 本地 4 级分类）。
+     */
+    @SubscribeEvent
+    public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
+        int prefetched = cn.blockforge.generated.generatedmod.api.rarity.RaritySources.prefetch();
+        if (prefetched > 0) {
+            org.slf4j.LoggerFactory.getLogger("MCphoneMarketExpansion")
+                    .info("已从 Rarity Core 预取 {} 条物品稀有度", prefetched);
+        }
+    }
+
     /** 注册命令：/mcme rarity info | export（导出稀有度快照）。 */
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -35,6 +48,8 @@ public final class ServerEvents {
             }
             MarketData data = MarketData.get(level);
             if (data.onTick(level)) {
+                // 跨天：先给做市商村民做每日结算（记录当日盈亏并刷新名字牌上的钱包余额）
+                cn.blockforge.generated.generatedmod.broker.BrokerSpawn.settleAll(level, level.getDayTime() / 24000L);
                 Map<UUID, List<String>> messages = data.consumeDailyMessages();
                 for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
                     List<String> ownMessages = messages.get(player.getUUID());

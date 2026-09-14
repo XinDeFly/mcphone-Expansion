@@ -39,7 +39,15 @@ public final class GeneratedMod {
 
     public static final RegistryObject<BlockEntityType<PublicMarketBlockEntity>> PUBLIC_MARKET_BE = BLOCK_ENTITIES.register("public_market", () -> BlockEntityType.Builder.of(PublicMarketBlockEntity::new, PUBLIC_MARKET.get()).build(null));
     public static final RegistryObject<BlockEntityType<TradingPlatformBlockEntity>> TRADING_PLATFORM_BE = BLOCK_ENTITIES.register("trading_platform", () -> BlockEntityType.Builder.of(TradingPlatformBlockEntity::new, TRADING_PLATFORM.get()).build(null));
-    public static final RegistryObject<net.minecraft.world.inventory.MenuType<MarketMenu>> MARKET_MENU = MENUS.register("market_menu", () -> net.minecraftforge.common.extensions.IForgeMenuType.create(MarketMenu::new));
+public static final RegistryObject<net.minecraft.world.inventory.MenuType<MarketMenu>> MARKET_MENU = MENUS.register("market_menu",
+            () -> net.minecraftforge.common.extensions.IForgeMenuType.create((id, inventory, buf) -> {
+                net.minecraft.core.BlockPos pos = buf.readBlockPos();
+                int mode = buf.readByte();
+                int brokerId = mode == 6 ? buf.readVarInt() : -1;
+                MarketMenu menu = new MarketMenu(id, inventory, pos, mode);
+                menu.brokerId = brokerId;
+                return menu;
+            }));
 
     @SubscribeEvent
     public static void addMcphoneTabItems(BuildCreativeModeTabContentsEvent event) {
@@ -60,6 +68,8 @@ public final class GeneratedMod {
         ITEMS.register(bus);
         BLOCK_ENTITIES.register(bus);
         MENUS.register(bus);
+        // 做市商村民：职业 + 工作站点（工作站点不注册物品，无法被玩家放置诱导转职）
+        cn.blockforge.generated.generatedmod.broker.BrokerProfession.init(bus);
         bus.addListener(GeneratedMod::addMcphoneTabItems);
         cn.blockforge.generated.mod3ce985ee.GeneratedMod.init(bus);
     }

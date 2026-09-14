@@ -16,7 +16,11 @@ public final class MarketActionPacket {
     public static final byte REQUEST_FUTURES_QUOTE = 10;
     public static final byte OPEN_PHONE_HUB = 11;
     public static final byte OPEN_TOWER_STORAGE = 12;
-    public static final byte OPEN_MONITOR = 13;
+public static final byte OPEN_MONITOR = 13;
+    /** 做市商：按卖价 ask 买入（做市商卖货给玩家）。 */
+    public static final byte BROKER_BUY = 14;
+    /** 做市商：按买价 bid 卖出（做市商收货付钱）。 */
+    public static final byte BROKER_SELL = 15;
 
     public final byte action;
     public final String asset;

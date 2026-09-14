@@ -24,7 +24,9 @@ import java.util.Map;
 
 public class MarketMenu extends AbstractContainerMenu {
     public final BlockPos pos;
-    public final int mode;
+public final int mode;
+    /** 做市商界面（mode 6）对应的村民实体 ID；其它模式为 -1。 */
+    public int brokerId = -1;
     public final Inventory playerInventory;
     private Container marketInventory;
     /** 显示器控制台（mode 5）：可切换绑定到所选机箱容器的 45 个槽位。 */
@@ -89,7 +91,7 @@ public class MarketMenu extends AbstractContainerMenu {
         } else {
             this.marketInventory = found == null ? new SimpleContainer(storageSize) : found;
         }
-        if (mode == 1 || mode == 2) {
+        if (mode == 1 || mode == 2 || mode == 6) {
             for (int i = 0; i < storageSize; i++) {
                 addSlot(new Slot(marketInventory, i, 158 + (i % 9) * 18, 36 + (i / 9) * 18));
             }

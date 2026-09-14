@@ -1,5 +1,5 @@
 plugins { id 'java'; id 'net.minecraftforge.gradle' version '6.0.24' }
-version = '4.6.5'
+version = '4.7.2'
 group = 'cn.blockforge.generated.generatedmod'
 base { archivesName = 'generated_mod' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
